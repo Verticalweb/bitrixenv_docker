@@ -40,7 +40,7 @@ services:
     volumes:
       # Если у нас есть старая БД, дамп которой необходимо развернуть, то положить dump.sql рядом с этим файлом и он
       # будет доступен, внутри контейнера по адресу /dump.sql
-      - ./dump.sql:/dump.sql
+      # - ./dump.sql:/dump.sql
       - ./mysql_data:/var/lib/mysql
     ports:
       - "3306"
