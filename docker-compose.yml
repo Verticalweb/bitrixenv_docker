@@ -1,0 +1,54 @@
+# основной кофигурационный файл докера
+# тут подключается несколько контейнеров
+# и вместе запускается как одна машина
+version: '2'
+services:
+  # подключается контейнер с apache, содержит в себе модуль php
+  apache:
+    # собирается из модуля в папке apache. настройки модуля в файле apache/Dockerfile
+    build: ./apache
+    ports:
+    # Обязательный проброс портов на выход, если мы хотим смотреть на наш сайт из вне
+    # ВАЖНО!!! порт должен быть уникальный на весь сервер
+    # ВАЖНО!!! на этот порт потом нужно сделать редирект в nginx
+      - 8088:80
+    volumes:
+    # Сдесь мы подключаем папку с нагим сайтом
+      - ./www:/var/www/html
+    # тут можно прописать доменное имя
+    # domainname: DOMAIN_NAME
+    links:
+    # Контейнер с apache связан с контейнером БД
+      - mysql
+    restart: always
+    ulimits:
+      stack: -1
+    # здесь прописываются переменные среды, которые нам нужны внутри контейнера
+    environment:
+      - CRON_INTERVAL_SEC=60
+     # раскомментировать, если требуется отправка email через сторонние сервисы
+#      - SMTP_MAILHUB=smtp.yandex.ru:465
+#      - SMTP_USER=server@pdd-host.ru
+#      - SMTP_PASS=password
+#      - SMTP_REWRITE_DOMAIN=pdd-host.ru
+      # ВАЖНО!!! обязательный параметр для правильной отправки почты (укказать доменное имя)
+      - SMTP_HOSTNAME=DOMAIN_NAME.ru
+  # подключается контейнер с mysql
+  mysql:
+    # собирается из модуля в папке mysql. настройки модуля в файле mysql/Dockerfile
+    build: ./mysql
+    volumes:
+      # Если у нас есть старая БД, дамп которой необходимо развернуть, то положить dump.sql рядом с этим файлом и он
+      # будет доступен, внутри контейнера по адресу /dump.sql
+      - ./dump.sql:/dump.sql
+      - ./mysql_data:/var/lib/mysql
+    ports:
+      - "3306"
+    environment:
+      # ВАЖНО!!! параметры БД! При создании контейнера по этим параметрам автоматически
+      # создается пользователь БД, сама база данных и root пароль! Параметры ЗАДАТЬ!
+      - MYSQL_USER=MYSQL_USER
+      - MYSQL_PASSWORD=MYSQL_PASSWORD
+      - MYSQL_DATABASE=MYSQL_DB
+      - MYSQL_ROOT_PASSWORD=MYSQL_ROOT_PASSWORD
+    restart: always
